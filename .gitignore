@@ -1,0 +1,31 @@
+# Environment variables — never commit
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# AWS & credentials — critical
+.aws/
+*.pem
+*.key
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+

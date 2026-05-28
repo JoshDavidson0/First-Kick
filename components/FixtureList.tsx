@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Fixture } from "@/types";
 import { fetchFixtures } from "@/lib/fixtureApi";
 import { getFixturesForTeam } from "@/lib/fixtureData";
+import { canonicalizeTeamName } from "@/lib/teamNames";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,14 +18,15 @@ interface FixtureListProps {
 export function FixtureList({ teamName }: FixtureListProps) {
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [isLive, setIsLive] = useState(false);
+  const canonicalTeamName = canonicalizeTeamName(teamName);
 
   useEffect(() => {
     // 1. Initial render with static data
-    const staticData = getFixturesForTeam(teamName);
+    const staticData = getFixturesForTeam(canonicalTeamName);
     setFixtures(staticData);
 
     // 2. Silent upgrade to live data
-    fetchFixtures(teamName).then((liveData) => {
+    fetchFixtures(canonicalTeamName).then((liveData) => {
       if (liveData && liveData.length > 0) {
         setFixtures(liveData);
         setIsLive(true);
@@ -34,10 +36,28 @@ export function FixtureList({ teamName }: FixtureListProps) {
 
   const renderFixture = (fixture: Fixture) => {
     const fixtureDate = new Date(fixture.date);
-    const isHome = fixture.homeTeam === teamName;
+    const isHome = canonicalizeTeamName(fixture.homeTeam) === canonicalTeamName;
     const opponent = isHome ? fixture.awayTeam : fixture.homeTeam;
     const played = fixture.score !== null;
     const isNext = !played && (isToday(fixtureDate) || !isPast(fixtureDate));
+    const userScore = played ? (isHome ? fixture.score!.home : fixture.score!.away) : null;
+    const opponentScore = played ? (isHome ? fixture.score!.away : fixture.score!.home) : null;
+
+    let resultLetter = "D";
+    let resultWord = "Draw";
+    let resultClass = "bg-gray-500 text-white border-transparent";
+
+    if (played && userScore !== null && opponentScore !== null) {
+      if (userScore > opponentScore) {
+        resultLetter = "W";
+        resultWord = "Win";
+        resultClass = "bg-green-500 text-white border-transparent";
+      } else if (userScore < opponentScore) {
+        resultLetter = "L";
+        resultWord = "Loss";
+        resultClass = "bg-red-500 text-white border-transparent";
+      }
+    }
 
     return (
       <div 
@@ -63,28 +83,14 @@ export function FixtureList({ teamName }: FixtureListProps) {
           {played ? (
             <div className="flex flex-col items-end">
               <div className="flex items-center gap-3">
-                {(() => {
-                  const userScore = isHome ? fixture.score!.home : fixture.score!.away;
-                  const opponentScore = isHome ? fixture.score!.away : fixture.score!.home;
-                  let result = "D";
-                  let resultClass = "bg-gray-400 hover:bg-gray-400";
-                  
-                  if (userScore > opponentScore) {
-                    result = "W";
-                    resultClass = "bg-green-500 hover:bg-green-500";
-                  } else if (userScore < opponentScore) {
-                    result = "L";
-                    resultClass = "bg-red-500 hover:bg-red-500";
-                  }
-                  
-                  return (
-                    <Badge className={`${resultClass} text-white border-transparent w-7 h-7 flex items-center justify-center rounded-full p-0 text-sm font-bold shadow-sm`}>
-                      {result}
-                    </Badge>
-                  );
-                })()}
+                <Badge className={`${resultClass} w-7 h-7 flex items-center justify-center rounded-full p-0 text-sm font-bold shadow-sm`}>
+                  {resultLetter}
+                </Badge>
                 <span className="text-2xl font-bold tabular-nums">
                   {fixture.score?.home} – {fixture.score?.away}
+                </span>
+                <span className="text-sm font-semibold text-muted-foreground">
+                  ({resultLetter}) {resultWord}
                 </span>
               </div>
               <Badge variant="outline" className="mt-1">Final Result</Badge>

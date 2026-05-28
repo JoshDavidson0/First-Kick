@@ -1,4 +1,5 @@
 import { Fixture } from "@/types";
+import { canonicalizeTeamName } from "@/lib/teamNames";
 
 /**
  * Static fallback dataset for the 2025/26 Premier League season.
@@ -411,7 +412,29 @@ export const fixtureData: Record<string, Fixture[]> = {
 
 /**
  * Helper to get all fixtures for a specific team.
+ * Uses a per-team static list when present; otherwise collects matches
+ * from every team's schedule (only 11 teams have dedicated lists).
  */
 export function getFixturesForTeam(teamName: string): Fixture[] {
-  return fixtureData[teamName] || [];
+  const canonical = canonicalizeTeamName(teamName);
+  const direct = fixtureData[canonical];
+  if (direct) {
+    return direct;
+  }
+
+  const byMatchId = new Map<string, Fixture>();
+  for (const teamFixtures of Object.values(fixtureData)) {
+    for (const fixture of teamFixtures) {
+      const involvesTeam =
+        canonicalizeTeamName(fixture.homeTeam) === canonical ||
+        canonicalizeTeamName(fixture.awayTeam) === canonical;
+      if (involvesTeam) {
+        byMatchId.set(fixture.matchId, fixture);
+      }
+    }
+  }
+
+  return Array.from(byMatchId.values()).sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
 }

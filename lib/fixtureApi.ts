@@ -17,7 +17,6 @@ export async function fetchFixtures(teamName: string): Promise<Fixture[]> {
     
     return data;
   } catch (error) {
-    console.error("Failed to fetch live fixtures, using static fallback:", error);
     return getFixturesForTeam(teamName);
   }
 }

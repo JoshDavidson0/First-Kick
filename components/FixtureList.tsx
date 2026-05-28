@@ -62,9 +62,31 @@ export function FixtureList({ teamName }: FixtureListProps) {
         <div className="text-right">
           {played ? (
             <div className="flex flex-col items-end">
-              <span className="text-2xl font-bold tabular-nums">
-                {fixture.score?.home} – {fixture.score?.away}
-              </span>
+              <div className="flex items-center gap-3">
+                {(() => {
+                  const userScore = isHome ? fixture.score!.home : fixture.score!.away;
+                  const opponentScore = isHome ? fixture.score!.away : fixture.score!.home;
+                  let result = "D";
+                  let resultClass = "bg-gray-400 hover:bg-gray-400";
+                  
+                  if (userScore > opponentScore) {
+                    result = "W";
+                    resultClass = "bg-green-500 hover:bg-green-500";
+                  } else if (userScore < opponentScore) {
+                    result = "L";
+                    resultClass = "bg-red-500 hover:bg-red-500";
+                  }
+                  
+                  return (
+                    <Badge className={`${resultClass} text-white border-transparent w-7 h-7 flex items-center justify-center rounded-full p-0 text-sm font-bold shadow-sm`}>
+                      {result}
+                    </Badge>
+                  );
+                })()}
+                <span className="text-2xl font-bold tabular-nums">
+                  {fixture.score?.home} – {fixture.score?.away}
+                </span>
+              </div>
               <Badge variant="outline" className="mt-1">Final Result</Badge>
             </div>
           ) : (

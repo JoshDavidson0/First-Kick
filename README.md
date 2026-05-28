@@ -1,20 +1,10 @@
-# First Kick V2 ⚽
+# First Kick ⚽
 
 **Discover soccer your way — zero configuration, zero cost, instant fan.**
 
 ![Build](https://img.shields.io/badge/build-passing-brightgreen) ![License](https://img.shields.io/badge/license-MIT-blue) ![Stack](https://img.shields.io/badge/stack-Next.js-black) ![AI-Assisted](https://img.shields.io/badge/built%20with-AI--assisted%20SDLC-purple)
 
-First Kick V2 is a simplified, self-contained version of the original soccer discovery app. We've removed all AWS infrastructure complexity (no Lambdas, no DynamoDB, no Bedrock) and replaced it with a modern, rule-based matching engine that runs entirely in your browser. 
-
-The goal remains the same: helping new fans understand and enjoy soccer through a personalized onboarding journey.
-
-### 🚀 What's New in V2?
-
-- **Zero Configuration:** No AWS account or API keys required. Clone, install, and run.
-- **Rule-Based Matching:** Replaced expensive AI inference with a deterministic, rule-based matcher that is instant and accurate.
-- **Full Season Fixtures:** A new hybrid fixture system that shows your team's entire 2025/26 season schedule using static fallbacks and live API updates.
-- **Local Persistence:** Your progress and recommendations are saved securely in your browser's `localStorage`.
-- **Simplified Stack:** A pure Next.js application with zero external service dependencies for the core experience.
+First Kick is a beginner-friendly soccer discovery app designed to help new fans understand and enjoy the sport without feeling overwhelmed. Through a short onboarding quiz based on personality traits and video game preferences, users receive an AI-generated recommendation for a soccer team, player, and league tailored specifically to them.
 
 ---
 
@@ -51,7 +41,7 @@ Visit: `http://localhost:3000`
 
 ## 3. Architecture Summary
 
-First Kick V2 is a monolithic Next.js application designed for maximum portability and ease of use.
+First Kick is a monolithic Next.js application designed for maximum portability and ease of use.
 
 - **Frontend:** React with Tailwind CSS and Radix UI components.
 - **Matching Engine:** A synchronous, pure TypeScript matcher that maps quiz answers to team identity tags.
@@ -62,22 +52,22 @@ First Kick V2 is a monolithic Next.js application designed for maximum portabili
 
 ---
 
-## 4. AI-Assisted SDLC (V1 Heritage)
+## 4. AI-Assisted SDLC
 
-While V2 is a streamlined rebuild, the project's foundation was built using a deliberate **AI-assisted software development lifecycle (SDLC)**. This project serves as a case study in matching specific AI tools to the engineering phases where they perform best.
+The project's foundation was built using a deliberate **AI-assisted software development lifecycle (SDLC)**. This project serves as a case study in matching specific AI tools to the engineering phases where they perform best.
 
 | Tool | Role in Project | SDLC Phase |
 |---|---|---|
 | ChatGPT (GPT-4o) | Planning, documentation, feasibility analysis, SRS, risk register | Planning |
 | v0 by Vercel | UI scaffolding, component generation, responsive layout prototyping | Design |
-| Claude Code | Full-stack implementation, V2 refactoring, core logic generation | Development |
+| Claude Code | Full-stack implementation, refactoring, core logic generation | Development |
 | GitHub Copilot | Debugging assistance, test generation, inline code completion | Testing |
 
 ### AI Engineering Analysis
 
 Building First Kick demonstrated several key insights into modern AI-assisted engineering:
 
-- **Context is King:** Tools like Claude Code perform exponentially better when provided with structured context (like our V1 `claude.md`) that defines architectural boundaries and naming conventions.
+- **Context is King:** Tools like Claude Code perform exponentially better when provided with structured context (like our `claude.md`) that defines architectural boundaries and naming conventions.
 - **Verification is Non-Negotiable:** AI tools can hallucinate API signatures or quantitatively overconfident claims. The role of the developer has shifted from "writer" to "editor and orchestrator," where verification of every AI output is the most critical step.
 - **Design Compression:** v0 and similar tools dramatically compress the time from concept to high-fidelity UI, allowing developers to focus more on integration and business logic.
 

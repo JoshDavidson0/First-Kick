@@ -26,10 +26,10 @@ export function FixtureList({ teamName }: FixtureListProps) {
     setFixtures(staticData);
 
     // 2. Silent upgrade to live data
-    fetchFixtures(canonicalTeamName).then((liveData) => {
-      if (liveData && liveData.length > 0) {
-        setFixtures(liveData);
-        setIsLive(true);
+    fetchFixtures(canonicalTeamName).then(({ data, isLive }) => {
+      if (data && data.length > 0) {
+        setFixtures(data);
+        setIsLive(isLive);
       }
     });
   }, [teamName]);

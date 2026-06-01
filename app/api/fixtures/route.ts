@@ -3,6 +3,8 @@ import { Fixture } from "@/types";
 import { canonicalizeTeamName } from "@/lib/teamNames";
 import { rateLimit } from "@/lib/rateLimit";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   // 1. Rate limiting
   const ip = request.headers.get("x-forwarded-for") || "unknown";
@@ -20,8 +22,11 @@ export async function GET(request: Request) {
   const requestedTeam = team ? canonicalizeTeamName(team) : null;
   const apiKey = process.env.FOOTBALL_DATA_API_KEY;
 
+  // Debug log for Amplify logs (viewable in CloudWatch/Amplify Console)
+  console.log(`[API] Fetching fixtures for ${requestedTeam}. API Key present: ${!!apiKey}`);
+
   if (!apiKey) {
-    return NextResponse.json({ fallback: true });
+    return NextResponse.json({ fallback: true, reason: "missing_api_key" });
   }
 
   try {
@@ -33,11 +38,17 @@ export async function GET(request: Request) {
     });
 
     if (!response.ok) {
-      return NextResponse.json({ fallback: true });
+      console.error(`[API] External API error: ${response.status} ${response.statusText}`);
+      return NextResponse.json({ fallback: true, reason: "api_fetch_failed" });
     }
 
     const data = await response.json();
     
+    if (!data.matches) {
+      console.error("[API] Unexpected response structure from football-data.org", data);
+      return NextResponse.json({ fallback: true, reason: "invalid_api_response" });
+    }
+
     // Map football-data.org response to our Fixture shape
     const mappedFixtures: Fixture[] = data.matches.map((match: any) => ({
       matchId: match.id.toString(),
@@ -58,7 +69,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(finalData);
   } catch (error) {
-    // Return a fallback flag so the client knows to use static data
-    return NextResponse.json({ fallback: true });
+    console.error("[API] Caught error in route handler:", error);
+    return NextResponse.json({ fallback: true, reason: "internal_server_error" });
   }
 }

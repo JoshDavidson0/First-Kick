@@ -4,9 +4,9 @@ import { getFixturesForTeam } from "./fixtureData";
 
 /**
  * Client-side helper to fetch fixtures for a team.
- * Falls back to static data if the API fails or returns no matches.
+ * Returns the data and a flag indicating if it's live data.
  */
-export async function fetchFixtures(teamName: string): Promise<Fixture[]> {
+export async function fetchFixtures(teamName: string): Promise<{ data: Fixture[], isLive: boolean }> {
   const canonical = canonicalizeTeamName(teamName);
 
   try {
@@ -17,11 +17,11 @@ export async function fetchFixtures(teamName: string): Promise<Fixture[]> {
 
     const data = await response.json();
     if (data.fallback || !Array.isArray(data) || data.length === 0) {
-      return getFixturesForTeam(canonical);
+      return { data: getFixturesForTeam(canonical), isLive: false };
     }
 
-    return data;
+    return { data, isLive: true };
   } catch {
-    return getFixturesForTeam(canonical);
+    return { data: getFixturesForTeam(canonical), isLive: false };
   }
 }

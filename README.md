@@ -10,13 +10,15 @@ First Kick is a beginner-friendly soccer discovery app designed to help new fans
 
 ## 1. Getting Started
 
-### Prerequisites
+### Check out the project here: 
 
+- https://main.d3ftcq147q0j04.amplifyapp.com
+
+### Or Install and Run the project locally: 
 - Node.js v18 or higher
 - npm or yarn
 - Git
 
-### Installation & Run
 
 ```bash
 git clone https://github.com/your-username/first-kick.git

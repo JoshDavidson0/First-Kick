@@ -9,6 +9,7 @@ import { ModuleLesson } from "@/components/module-lesson";
 import { FixtureList } from "@/components/FixtureList";
 import type { QuizData, SessionData } from "@/types";
 import { getMatch } from "@/lib/matcher";
+import { ChevronDown } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Screen union — one discriminated variant per screen
@@ -98,7 +99,7 @@ export default function Home() {
     setScreen({ name: "recommendation", session });
   };
 
-  const handleModuleComplete = (moduleId: string, session: SessionData) => {
+  const handleModuleComplete = async (moduleId: string, session: SessionData) => {
     const updatedCompletedModules = Array.from(new Set([...session.progress.completedModules, moduleId]));
     
     // Simple linear progression: rules -> positions -> formations -> rivalries -> history
@@ -148,27 +149,36 @@ export default function Home() {
 
     case "recommendation":
       return (
-        <main className="min-h-screen py-12 px-4 space-y-8">
-          <RecommendationCard
-            team={screen.session.favoriteTeam}
-            player={screen.session.favoritePlayer}
-            league={screen.session.favoriteLeague}
-            reason={screen.session.reason}
-            isLoading={false}
-            error={null}
-            onViewJourney={() => setScreen({ name: "journey", session: screen.session })}
-            onRetake={() => setScreen({ name: "quiz" })}
-          />
-          <div className="max-w-4xl mx-auto">
-            <FixtureList teamName={screen.session.favoriteTeam} />
-          </div>
-          <div className="flex justify-center pb-8">
-            <button 
-              onClick={handleStartOver}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              Start Over / Reset All Progress
-            </button>
+        <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 py-12 px-4">
+          <div className="flex flex-col">
+            <RecommendationCard
+              team={screen.session.favoriteTeam}
+              player={screen.session.favoritePlayer}
+              league={screen.session.favoriteLeague}
+              reason={screen.session.reason}
+              isLoading={false}
+              error={null}
+              onViewJourney={() => setScreen({ name: "journey", session: screen.session })}
+              onRetake={() => setScreen({ name: "quiz" })}
+            />
+
+            <div className="flex flex-col items-center animate-bounce text-muted-foreground py-4">
+              <span className="text-sm mb-1">Scroll down to see your team's full season</span>
+              <ChevronDown className="w-4 h-4" />
+            </div>
+
+            <div className="max-w-4xl mx-auto w-full">
+              <FixtureList teamName={screen.session.favoriteTeam} />
+            </div>
+
+            <div className="flex justify-center py-12">
+              <button
+                onClick={handleStartOver}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                Start Over / Reset All Progress
+              </button>
+            </div>
           </div>
         </main>
       );

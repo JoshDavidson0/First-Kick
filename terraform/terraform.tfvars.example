@@ -1,0 +1,12 @@
+# Copy this file to terraform.tfvars and fill in your real values
+# terraform.tfvars is gitignored and must never be committed
+
+github_token          = "ghp_your_github_personal_access_token"
+github_owner          = "your_github_username"
+github_repo           = "your_repo_name"
+github_branch         = "main"
+app_name              = "first-kick"
+
+# Optional — leave empty string if you don't have one
+# Get a free key at https://www.football-data.org/client/register
+football_data_api_key = ""

@@ -1,8 +1,20 @@
 import { NextResponse } from "next/server";
 import { Fixture } from "@/types";
 import { canonicalizeTeamName } from "@/lib/teamNames";
+import { rateLimit } from "@/lib/rateLimit";
 
 export async function GET(request: Request) {
+  // 1. Rate limiting
+  const ip = request.headers.get("x-forwarded-for") || "unknown";
+  const { allowed } = rateLimit(ip);
+
+  if (!allowed) {
+    return NextResponse.json(
+      { fallback: true, reason: "rate_limited" },
+      { status: 429 }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const team = searchParams.get("team");
   const requestedTeam = team ? canonicalizeTeamName(team) : null;

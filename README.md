@@ -20,7 +20,7 @@ First Kick is a beginner-friendly soccer discovery app designed to help new fans
 
 ```bash
 git clone https://github.com/your-username/first-kick.git
-cd first-kick
+cd first-kick 
 npm install
 npm run dev
 ```

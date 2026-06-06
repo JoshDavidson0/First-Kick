@@ -1,3 +1,5 @@
+Gaining familiarity with IaaC and Cloud tools with assistance from Claude.
+
 # First Kick ⚽
 
 **Discover soccer your way — zero configuration, zero cost, instant fan.**

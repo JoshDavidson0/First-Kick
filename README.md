@@ -4,7 +4,7 @@
 
 ![Build](https://img.shields.io/badge/build-passing-brightgreen) ![License](https://img.shields.io/badge/license-MIT-blue) ![Stack](https://img.shields.io/badge/stack-Next.js-black) ![AI-Assisted](https://img.shields.io/badge/built%20with-AI--assisted%20SDLC-purple)
 
-First Kick is a beginner-friendly soccer discovery app designed to help new fans understand and enjoy the sport without feeling overwhelmed. Through a short onboarding quiz based on personality traits and video game preferences, users receive an AI-generated recommendation for a soccer team, player, and league tailored specifically to them.
+First Kick is a beginner-friendly soccer discovery app designed to help new fans understand and enjoy the sport. The app contains a short onboarding quiz based on personality traits and video game preferences, users receive an AI-generated recommendation for a soccer team, player, and league tailored specifically to them.
 
 ---
 
@@ -52,8 +52,6 @@ First Kick is a monolithic Next.js application designed for maximum portability 
 - **Matching Engine:** A synchronous, pure TypeScript matcher that maps quiz answers to team identity tags.
 - **Data Strategy:** A hybrid approach for fixtures. The app loads an internal static dataset (`lib/fixtureData.ts`) for instant rendering and silently attempts to fetch live updates from a Next.js Route Handler (`app/api/fixtures/route.ts`). The live layer only activates when a `FOOTBALL_DATA_API_KEY` is set in your local `.env.local`; otherwise the static data is used.
 - **Persistence:** All user state (recommendations, learning progress) is stored in `localStorage`.
-
-First Kick was previously deployed on AWS Amplify via Terraform; that deployment has been retired and the project is now local-only.
 
 > 📄 For full architecture details, see [`docs/architecture-v2.md`](docs/architecture-v2.md)
 

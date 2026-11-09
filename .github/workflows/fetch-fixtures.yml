@@ -1,0 +1,66 @@
+name: Fetch fixtures
+
+on:
+  schedule:
+    # Tuesdays 06:17 UTC, after the weekend and Monday-night matches.
+    - cron: "17 6 * * 2"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write # for the keepalive step
+
+concurrency:
+  group: fetch-fixtures
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # If this fails, the job fails and nothing is published. The previous
+      # fixtures.json stays until it is 8 days old, then users see an error.
+      - name: Fetch fixtures
+        run: node scripts/fetch-fixtures.mjs "$RUNNER_TEMP/fixtures.json"
+        env:
+          FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
+
+      - name: Publish to data branch
+        run: |
+          set -euo pipefail
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          worktree="$RUNNER_TEMP/data"
+          if git ls-remote --exit-code --heads origin data > /dev/null; then
+            git fetch --depth=1 origin data
+            git worktree add -B data "$worktree" origin/data
+          else
+            git worktree add --detach "$worktree"
+            git -C "$worktree" checkout --orphan data
+            git -C "$worktree" rm -rf --quiet .
+          fi
+
+          # The data branch holds only fixtures.json.
+          git -C "$worktree" rm -rf --quiet --ignore-unmatch .
+          cp "$RUNNER_TEMP/fixtures.json" "$worktree/fixtures.json"
+          git -C "$worktree" add fixtures.json
+          git -C "$worktree" commit --quiet -m "Update fixtures $(date -u +%Y-%m-%d)"
+          git -C "$worktree" push origin data
+
+      # GitHub disables scheduled workflows on public repos after 60 days with
+      # no repository activity. Re-enabling the workflow resets that timer.
+      - name: Keep schedule alive
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/fetch-fixtures.yml/enable"
+        env:
+          GH_TOKEN: ${{ github.token }}

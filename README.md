@@ -1,5 +1,3 @@
-Gaining familiarity with IaaC and Cloud tools with assistance from Claude.
-
 # First Kick ⚽
 
 **Discover soccer your way — zero configuration, zero cost, instant fan.**
@@ -12,24 +10,27 @@ First Kick is a beginner-friendly soccer discovery app designed to help new fans
 
 ## 1. Getting Started
 
-### Check out the project here: 
+### Run locally
 
-- https://main.d3ftcq147q0j04.amplifyapp.com
+First Kick is not hosted. To use it, clone the repository and run it on your machine.
 
-### Or Install and Run the project locally: 
+Prerequisites:
 - Node.js v18 or higher
 - npm or yarn
 - Git
 
-
 ```bash
-git clone https://github.com/JoshDavidson0/first-kick.git
-cd first-kick 
+git clone https://github.com/JoshDavidson0/First-Kick-Retired.git
+cd First-Kick-Retired
 npm install
 npm run dev
 ```
 
 Visit: `http://localhost:3000`
+
+### Optional: live fixture data
+
+No environment variables are required; the app uses bundled static fixtures by default. For live fixtures, copy `.env.example` to `.env.local` (gitignored), set `FOOTBALL_DATA_API_KEY` to a free key from [football-data.org](https://www.football-data.org/client/register), and restart `npm run dev`.
 
 ---
 
@@ -49,8 +50,10 @@ First Kick is a monolithic Next.js application designed for maximum portability 
 
 - **Frontend:** React with Tailwind CSS and Radix UI components.
 - **Matching Engine:** A synchronous, pure TypeScript matcher that maps quiz answers to team identity tags.
-- **Data Strategy:** A hybrid approach for fixtures. The app loads an internal static dataset (`lib/fixtureData.ts`) for instant rendering and silently attempts to fetch live updates from a Next.js Route Handler (`app/api/fixtures/route.ts`).
+- **Data Strategy:** A hybrid approach for fixtures. The app loads an internal static dataset (`lib/fixtureData.ts`) for instant rendering and silently attempts to fetch live updates from a Next.js Route Handler (`app/api/fixtures/route.ts`). The live layer only activates when a `FOOTBALL_DATA_API_KEY` is set in your local `.env.local`; otherwise the static data is used.
 - **Persistence:** All user state (recommendations, learning progress) is stored in `localStorage`.
+
+First Kick was previously deployed on AWS Amplify via Terraform; that deployment has been retired and the project is now local-only.
 
 > 📄 For full architecture details, see [`docs/architecture-v2.md`](docs/architecture-v2.md)
 

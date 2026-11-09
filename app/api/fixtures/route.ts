@@ -1,63 +1,55 @@
 import { NextResponse } from "next/server";
-import { Fixture } from "@/types";
-import { canonicalizeTeamName } from "@/lib/teamNames";
+import { FixturesResult } from "@/types";
+import {
+  PUBLISHED_FIXTURES_URL,
+  evaluatePublishedFixtures,
+  fixtureError,
+} from "@/lib/publishedFixtures";
 
 export const dynamic = 'force-dynamic';
+
+const ERROR_STATUS: Record<string, number> = {
+  missing_team: 400,
+  fetch_failed: 502,
+  invalid_data: 502,
+  stale_data: 503,
+  team_not_found: 404,
+};
+
+function respond(team: string | null, result: FixturesResult) {
+  const status = result.ok ? 200 : ERROR_STATUS[result.code] ?? 500;
+  // One line per outcome (visible in the terminal running npm run dev)
+  console.log(`[API] fixtures team=${team ?? "-"} -> ${result.ok ? `ok (${result.fixtures.length})` : result.code} ${status}`);
+  return NextResponse.json(result, { status });
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const team = searchParams.get("team");
-  const requestedTeam = team ? canonicalizeTeamName(team) : null;
-  const apiKey = process.env.FOOTBALL_DATA_API_KEY;
 
-  // Debug log (visible in the terminal running npm run dev)
-  console.log(`[API] Fetching fixtures for ${requestedTeam}. API Key present: ${!!apiKey}`);
-
-  if (!apiKey) {
-    return NextResponse.json({ fallback: true, reason: "missing_api_key" });
+  if (!team) {
+    return respond(null, fixtureError("missing_team"));
   }
 
+  let response: Response;
   try {
-    const response = await fetch("https://api.football-data.org/v4/competitions/PL/matches?season=2025", {
-      headers: {
-        "X-Auth-Token": apiKey
-      },
+    response = await fetch(PUBLISHED_FIXTURES_URL, {
       next: { revalidate: 3600 } // Cache for 1 hour
     });
-
-    if (!response.ok) {
-      console.error(`[API] External API error: ${response.status} ${response.statusText}`);
-      return NextResponse.json({ fallback: true, reason: "api_fetch_failed" });
-    }
-
-    const data = await response.json();
-    
-    if (!data.matches) {
-      console.error("[API] Unexpected response structure from football-data.org", data);
-      return NextResponse.json({ fallback: true, reason: "invalid_api_response" });
-    }
-
-    // Map football-data.org response to our Fixture shape
-    const mappedFixtures: Fixture[] = data.matches.map((match: any) => ({
-      matchId: match.id.toString(),
-      homeTeam: canonicalizeTeamName(match.homeTeam.shortName || match.homeTeam.name),
-      awayTeam: canonicalizeTeamName(match.awayTeam.shortName || match.awayTeam.name),
-      date: match.utcDate,
-      score: match.score.fullTime.home !== null ? {
-        home: match.score.fullTime.home,
-        away: match.score.fullTime.away
-      } : null,
-      competition: "Premier League"
-    }));
-
-    // If a team was requested, filter it. Otherwise return all.
-    const finalData = requestedTeam
-      ? mappedFixtures.filter(f => f.homeTeam === requestedTeam || f.awayTeam === requestedTeam)
-      : mappedFixtures;
-
-    return NextResponse.json(finalData);
-  } catch (error) {
-    console.error("[API] Caught error in route handler:", error);
-    return NextResponse.json({ fallback: true, reason: "internal_server_error" });
+  } catch {
+    return respond(team, fixtureError("fetch_failed"));
   }
+
+  if (!response.ok) {
+    return respond(team, fixtureError("fetch_failed"));
+  }
+
+  let json: unknown;
+  try {
+    json = await response.json();
+  } catch {
+    return respond(team, fixtureError("invalid_data"));
+  }
+
+  return respond(team, evaluatePublishedFixtures(json, team, new Date()));
 }

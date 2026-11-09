@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Fixture } from "@/types";
+import { useState, useEffect, useCallback } from "react";
+import { Fixture, FixtureErrorCode } from "@/types";
 import { fetchFixtures } from "@/lib/fixtureApi";
-import { getFixturesForTeam } from "@/lib/fixtureData";
 import { canonicalizeTeamName } from "@/lib/teamNames";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CalendarDays, MapPin } from "lucide-react";
+import { AlertCircle, CalendarDays, MapPin } from "lucide-react";
 import { format, isPast, isToday } from "date-fns";
 
 interface FixtureListProps {
@@ -16,23 +18,33 @@ interface FixtureListProps {
 }
 
 export function FixtureList({ teamName }: FixtureListProps) {
+  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
-  const [isLive, setIsLive] = useState(false);
+  const [season, setSeason] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [error, setError] = useState<{ code: FixtureErrorCode; message: string } | null>(null);
   const canonicalTeamName = canonicalizeTeamName(teamName);
 
-  useEffect(() => {
-    // 1. Initial render with static data
-    const staticData = getFixturesForTeam(canonicalTeamName);
-    setFixtures(staticData);
+  const loadFixtures = useCallback(async () => {
+    setStatus("loading");
+    setError(null);
 
-    // 2. Silent upgrade to live data
-    fetchFixtures(canonicalTeamName).then(({ data, isLive }) => {
-      if (data && data.length > 0) {
-        setFixtures(data);
-        setIsLive(isLive);
-      }
-    });
-  }, [teamName]);
+    const result = await fetchFixtures(canonicalTeamName);
+    if (result.ok) {
+      setFixtures(result.fixtures);
+      setSeason(result.season);
+      setLastUpdated(result.lastUpdated);
+      setStatus("success");
+    } else {
+      setFixtures([]);
+      setError({ code: result.code, message: result.message });
+      setStatus("error");
+    }
+  }, [canonicalTeamName]);
+
+  useEffect(() => {
+    loadFixtures();
+  }, [loadFixtures]);
 
   const renderFixture = (fixture: Fixture) => {
     const fixtureDate = new Date(fixture.date);
@@ -110,27 +122,47 @@ export function FixtureList({ teamName }: FixtureListProps) {
     <Card className="w-full max-w-2xl mx-auto overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between bg-primary/5">
         <div>
-          <CardTitle>2025/26 Season Schedule</CardTitle>
+          <CardTitle>{status === "success" ? `${season} Season Schedule` : "Season Schedule"}</CardTitle>
           <p className="text-sm text-muted-foreground">Full fixtures and results for {teamName}</p>
         </div>
-        {isLive && (
-          <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200">
-            Live Updates
+        {status === "success" && lastUpdated && (
+          <Badge variant="outline">
+            Updated {format(new Date(lastUpdated), "MMM d, yyyy")}
           </Badge>
         )}
       </CardHeader>
       <CardContent className="p-0">
-        <ScrollArea className="h-[500px]">
-          <div className="flex flex-col">
-            {fixtures.length > 0 ? (
-              fixtures.map(renderFixture)
-            ) : (
-              <div className="p-8 text-center text-muted-foreground">
-                No fixtures found for this team.
-              </div>
-            )}
+        {status === "loading" && (
+          <div className="flex flex-col gap-3 p-4" aria-busy="true">
+            <span className="sr-only">Loading fixtures…</span>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
           </div>
-        </ScrollArea>
+        )}
+
+        {status === "error" && error && (
+          <div className="p-4">
+            <Alert variant="destructive">
+              <AlertCircle />
+              <AlertTitle>Fixtures unavailable</AlertTitle>
+              <AlertDescription>
+                <p>{error.message}</p>
+                <Button variant="outline" size="sm" className="mt-2" onClick={loadFixtures}>
+                  Try again
+                </Button>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+
+        {status === "success" && (
+          <ScrollArea className="h-[500px]">
+            <div className="flex flex-col">
+              {fixtures.map(renderFixture)}
+            </div>
+          </ScrollArea>
+        )}
       </CardContent>
     </Card>
   );

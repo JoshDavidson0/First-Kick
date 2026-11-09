@@ -12,7 +12,7 @@ First Kick is a beginner-friendly soccer discovery app designed to help new fans
 
 ### Run locally
 
-First Kick is not hosted. To use it, clone the repository and run it on your machine.
+To use it, clone the repository and run it on your machine.
 
 Prerequisites:
 - Node.js v18 or higher
@@ -28,18 +28,18 @@ npm run dev
 
 Visit: `http://localhost:3000`
 
-### Optional: live fixture data
+### Fixture data
 
-No environment variables are required; the app uses bundled static fixtures by default. For live fixtures, copy `.env.example` to `.env.local` (gitignored), set `FOOTBALL_DATA_API_KEY` to a free key from [football-data.org](https://www.football-data.org/client/register), and restart `npm run dev`.
-
----
+- Fixtures refresh automatically every Tuesday from [football-data.org](https://www.football-data.org) via a GitHub Action.
+- No API key or setup is needed to run locally.
+- If the data can't be loaded or is more than 8 days old, the app shows an error instead of fixtures. There is no offline or saved dataset.
 
 ## 2. How it Works
 
 1. **Onboarding Quiz:** Share your personality traits and gaming preferences.
 2. **Team Match:** Our rule-based engine (`lib/matcher.ts`) pairs you with one of 20 Premier League clubs based on their identity tags and playing style.
 3. **Player Recommendation:** Get introduced to a key player on your new team who matches your dominant personality trait.
-4. **Season Schedule:** View every match in the 2025/26 season for your matched team, with past results and upcoming fixtures.
+4. **Season Schedule:** View every match in the current season for your matched team, with past results, upcoming fixtures and a "last updated" date.
 5. **Learning Journey:** Unlock bite-sized modules on rules, positions, formations, and more as you explore the sport.
 
 ---
@@ -50,7 +50,7 @@ First Kick is a monolithic Next.js application designed for maximum portability 
 
 - **Frontend:** React with Tailwind CSS and Radix UI components.
 - **Matching Engine:** A synchronous, pure TypeScript matcher that maps quiz answers to team identity tags.
-- **Data Strategy:** A hybrid approach for fixtures. The app loads an internal static dataset (`lib/fixtureData.ts`) for instant rendering and silently attempts to fetch live updates from a Next.js Route Handler (`app/api/fixtures/route.ts`). The live layer only activates when a `FOOTBALL_DATA_API_KEY` is set in your local `.env.local`; otherwise the static data is used.
+- **Data Strategy:** Fixtures are pre-fetched weekly. A GitHub Action writes them to `fixtures.json` on the `data` branch, the Route Handler (`app/api/fixtures/route.ts`) reads that file (cached for 1 hour), and `FixtureList` renders the result. If the data is missing, invalid or out of date, the user sees an error rather than masked or outdated fixtures.
 - **Persistence:** All user state (recommendations, learning progress) is stored in `localStorage`.
 
 > 📄 For full architecture details, see [`docs/architecture-v2.md`](docs/architecture-v2.md)

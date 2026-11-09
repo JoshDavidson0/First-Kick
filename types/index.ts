@@ -15,6 +15,26 @@ export type Fixture = {
   competition: "Premier League"
 }
 
+export type PublishedFixtures = {
+  schemaVersion: 1
+  lastUpdated: string // ISO 8601
+  season: string      // e.g. "2026/27"
+  source: "football-data.org"
+  fixtures: Fixture[]
+}
+
+export type FixtureErrorCode =
+  | "missing_team"
+  | "fetch_failed"
+  | "invalid_data"
+  | "stale_data"
+  | "team_not_found"
+  | "network_error" // client-side only: the request to /api/fixtures itself failed
+
+export type FixturesResult =
+  | { ok: true; fixtures: Fixture[]; lastUpdated: string; season: string }
+  | { ok: false; code: FixtureErrorCode; message: string; lastUpdated?: string }
+
 export type SessionData = {
   sessionId: string
   favoriteTeam: string

@@ -12,7 +12,7 @@ First Kick is a beginner-friendly soccer discovery app designed to help new fans
 
 ### Run locally
 
-First Kick is not hosted. To use it, clone the repository and run it on your machine.
+To use it, clone the repository and run it on your machine.
 
 Prerequisites:
 - Node.js v18 or higher
@@ -33,15 +33,6 @@ Visit: `http://localhost:3000`
 - Fixtures refresh automatically every Tuesday from [football-data.org](https://www.football-data.org) via a GitHub Action.
 - No API key or setup is needed to run locally.
 - If the data can't be loaded or is more than 8 days old, the app shows an error instead of fixtures. There is no offline or saved dataset.
-
-### Maintainer notes
-
-- The `FOOTBALL_DATA_API_KEY` repository secret powers the weekly workflow (`.github/workflows/fetch-fixtures.yml`).
-- The workflow can be run manually from the Actions tab (**Fetch fixtures → Run workflow**).
-- A failed run means users see an out-of-date error once the published data is more than 8 days old.
-- To test the script locally: `node --env-file=.env.local scripts/fetch-fixtures.mjs /tmp/fixtures.json`.
-
----
 
 ## 2. How it Works
 

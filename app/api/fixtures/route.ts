@@ -1,28 +1,16 @@
 import { NextResponse } from "next/server";
 import { Fixture } from "@/types";
 import { canonicalizeTeamName } from "@/lib/teamNames";
-import { rateLimit } from "@/lib/rateLimit";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  // 1. Rate limiting
-  const ip = request.headers.get("x-forwarded-for") || "unknown";
-  const { allowed } = rateLimit(ip);
-
-  if (!allowed) {
-    return NextResponse.json(
-      { fallback: true, reason: "rate_limited" },
-      { status: 429 }
-    );
-  }
-
   const { searchParams } = new URL(request.url);
   const team = searchParams.get("team");
   const requestedTeam = team ? canonicalizeTeamName(team) : null;
   const apiKey = process.env.FOOTBALL_DATA_API_KEY;
 
-  // Debug log for Amplify logs (viewable in CloudWatch/Amplify Console)
+  // Debug log (visible in the terminal running npm run dev)
   console.log(`[API] Fetching fixtures for ${requestedTeam}. API Key present: ${!!apiKey}`);
 
   if (!apiKey) {

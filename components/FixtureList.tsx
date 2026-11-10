@@ -1,6 +1,5 @@
 "use client";
 
-import { canonicalizeTeamName } from "@/lib/teamNames";
 import { describeFixtures, DescribedFixture } from "@/lib/describeFixtures";
 import { useFixtures } from "@/hooks/use-fixtures";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,8 +22,7 @@ const RESULT_DISPLAY = {
 };
 
 export function FixtureList({ teamName }: FixtureListProps) {
-  const team = canonicalizeTeamName(teamName);
-  const { state, retry } = useFixtures(team);
+  const { state, retry } = useFixtures(teamName);
   const loaded = state !== "loading" && state.ok ? state : null;
 
   const renderFixture = ({ fixture, isHome, opponent, result, status }: DescribedFixture) => {
@@ -114,7 +112,7 @@ export function FixtureList({ teamName }: FixtureListProps) {
         {loaded && (
           <ScrollArea className="h-[500px]">
             <div className="flex flex-col">
-              {describeFixtures(loaded.fixtures, team, new Date()).map(renderFixture)}
+              {describeFixtures(loaded.fixtures, teamName, new Date()).map(renderFixture)}
             </div>
           </ScrollArea>
         )}

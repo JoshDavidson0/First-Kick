@@ -4,7 +4,7 @@ import { Fixture, FixtureErrorCode, FixturesResult } from "@/types";
 import { canonicalizeTeamName } from "@/lib/teamNames";
 
 export const PUBLISHED_FIXTURES_URL =
-  "https://raw.githubusercontent.com/JoshDavidson0/First-Kick-Retired/data/fixtures.json";
+  "https://raw.githubusercontent.com/JoshDavidson0/First-Kick/data/fixtures.json";
 
 export const MAX_DATA_AGE_DAYS = 8;
 
@@ -12,7 +12,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type FixturesResponse = { status: number; body: FixturesResult };
 
-// network_error is produced by the client (lib/fixtureApi.ts), never here.
+// network_error is produced by the client (hooks/use-fixtures.ts), never here.
 type ServerErrorCode = Exclude<FixtureErrorCode, "network_error">;
 
 const ERRORS: Record<ServerErrorCode, { status: number; message: string }> = {

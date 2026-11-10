@@ -1,75 +1,35 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Fixture, FixtureErrorCode } from "@/types";
-import { fetchFixtures } from "@/lib/fixtureApi";
 import { canonicalizeTeamName } from "@/lib/teamNames";
+import { describeFixtures, DescribedFixture } from "@/lib/describeFixtures";
+import { useFixtures } from "@/hooks/use-fixtures";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AlertCircle, CalendarDays, MapPin } from "lucide-react";
-import { format, isPast, isToday } from "date-fns";
+import { AlertCircle, CalendarDays } from "lucide-react";
+import { format } from "date-fns";
 
 interface FixtureListProps {
   teamName: string;
 }
 
+const RESULT_DISPLAY = {
+  W: { word: "Win", className: "bg-green-500 text-white border-transparent" },
+  D: { word: "Draw", className: "bg-gray-500 text-white border-transparent" },
+  L: { word: "Loss", className: "bg-red-500 text-white border-transparent" },
+};
+
 export function FixtureList({ teamName }: FixtureListProps) {
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
-  const [fixtures, setFixtures] = useState<Fixture[]>([]);
-  const [season, setSeason] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  const [error, setError] = useState<{ code: FixtureErrorCode; message: string } | null>(null);
-  const canonicalTeamName = canonicalizeTeamName(teamName);
+  const team = canonicalizeTeamName(teamName);
+  const { state, retry } = useFixtures(team);
+  const loaded = state !== "loading" && state.ok ? state : null;
 
-  const loadFixtures = useCallback(async () => {
-    setStatus("loading");
-    setError(null);
-
-    const result = await fetchFixtures(canonicalTeamName);
-    if (result.ok) {
-      setFixtures(result.fixtures);
-      setSeason(result.season);
-      setLastUpdated(result.lastUpdated);
-      setStatus("success");
-    } else {
-      setFixtures([]);
-      setError({ code: result.code, message: result.message });
-      setStatus("error");
-    }
-  }, [canonicalTeamName]);
-
-  useEffect(() => {
-    loadFixtures();
-  }, [loadFixtures]);
-
-  const renderFixture = (fixture: Fixture) => {
-    const fixtureDate = new Date(fixture.date);
-    const isHome = canonicalizeTeamName(fixture.homeTeam) === canonicalTeamName;
-    const opponent = isHome ? fixture.awayTeam : fixture.homeTeam;
-    const played = fixture.score !== null;
-    const isNext = !played && (isToday(fixtureDate) || !isPast(fixtureDate));
-    const userScore = played ? (isHome ? fixture.score!.home : fixture.score!.away) : null;
-    const opponentScore = played ? (isHome ? fixture.score!.away : fixture.score!.home) : null;
-
-    let resultLetter = "D";
-    let resultWord = "Draw";
-    let resultClass = "bg-gray-500 text-white border-transparent";
-
-    if (played && userScore !== null && opponentScore !== null) {
-      if (userScore > opponentScore) {
-        resultLetter = "W";
-        resultWord = "Win";
-        resultClass = "bg-green-500 text-white border-transparent";
-      } else if (userScore < opponentScore) {
-        resultLetter = "L";
-        resultWord = "Loss";
-        resultClass = "bg-red-500 text-white border-transparent";
-      }
-    }
+  const renderFixture = ({ fixture, isHome, opponent, result, status }: DescribedFixture) => {
+    const played = status === "played";
+    const isNext = status === "next";
 
     return (
       <div 
@@ -79,7 +39,7 @@ export function FixtureList({ teamName }: FixtureListProps) {
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <CalendarDays className="h-3 w-3" />
-            {format(fixtureDate, "PPP 'at' p")}
+            {format(new Date(fixture.date), "PPP 'at' p")}
           </div>
           <div className="flex items-center gap-2 font-medium">
             <span className="text-xs text-muted-foreground uppercase tracking-wider">
@@ -87,33 +47,28 @@ export function FixtureList({ teamName }: FixtureListProps) {
             </span>
             <span className="text-lg">vs {opponent}</span>
             {isNext && <Badge variant="default" className="ml-2">Next Match</Badge>}
-            {!played && !isNext && <Badge variant="secondary" className="ml-2">Upcoming</Badge>}
+            {status === "upcoming" && <Badge variant="secondary" className="ml-2">Upcoming</Badge>}
           </div>
         </div>
 
-        <div className="text-right">
-          {played ? (
+        {result && (
+          <div className="text-right">
             <div className="flex flex-col items-end">
               <div className="flex items-center gap-3">
-                <Badge className={`${resultClass} w-7 h-7 flex items-center justify-center rounded-full p-0 text-sm font-bold shadow-sm`}>
-                  {resultLetter}
+                <Badge className={`${RESULT_DISPLAY[result].className} w-7 h-7 flex items-center justify-center rounded-full p-0 text-sm font-bold shadow-sm`}>
+                  {result}
                 </Badge>
                 <span className="text-2xl font-bold tabular-nums">
                   {fixture.score?.home} – {fixture.score?.away}
                 </span>
                 <span className="text-sm font-semibold text-muted-foreground">
-                  ({resultLetter}) {resultWord}
+                  ({result}) {RESULT_DISPLAY[result].word}
                 </span>
               </div>
               <Badge variant="outline" className="mt-1">Final Result</Badge>
             </div>
-          ) : (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              <span>TBD</span>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -122,17 +77,17 @@ export function FixtureList({ teamName }: FixtureListProps) {
     <Card className="w-full max-w-2xl mx-auto overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between bg-primary/5">
         <div>
-          <CardTitle>{status === "success" ? `${season} Season Schedule` : "Season Schedule"}</CardTitle>
+          <CardTitle>{loaded ? `${loaded.season} Season Schedule` : "Season Schedule"}</CardTitle>
           <p className="text-sm text-muted-foreground">Full fixtures and results for {teamName}</p>
         </div>
-        {status === "success" && lastUpdated && (
+        {loaded && (
           <Badge variant="outline">
-            Updated {format(new Date(lastUpdated), "MMM d, yyyy")}
+            Updated {format(new Date(loaded.lastUpdated), "MMM d, yyyy")}
           </Badge>
         )}
       </CardHeader>
       <CardContent className="p-0">
-        {status === "loading" && (
+        {state === "loading" && (
           <div className="flex flex-col gap-3 p-4" aria-busy="true">
             <span className="sr-only">Loading fixtures…</span>
             {Array.from({ length: 5 }).map((_, i) => (
@@ -141,14 +96,14 @@ export function FixtureList({ teamName }: FixtureListProps) {
           </div>
         )}
 
-        {status === "error" && error && (
+        {state !== "loading" && !state.ok && (
           <div className="p-4">
             <Alert variant="destructive">
               <AlertCircle />
               <AlertTitle>Fixtures unavailable</AlertTitle>
               <AlertDescription>
-                <p>{error.message}</p>
-                <Button variant="outline" size="sm" className="mt-2" onClick={loadFixtures}>
+                <p>{state.message}</p>
+                <Button variant="outline" size="sm" className="mt-2" onClick={retry}>
                   Try again
                 </Button>
               </AlertDescription>
@@ -156,10 +111,10 @@ export function FixtureList({ teamName }: FixtureListProps) {
           </div>
         )}
 
-        {status === "success" && (
+        {loaded && (
           <ScrollArea className="h-[500px]">
             <div className="flex flex-col">
-              {fixtures.map(renderFixture)}
+              {describeFixtures(loaded.fixtures, team, new Date()).map(renderFixture)}
             </div>
           </ScrollArea>
         )}

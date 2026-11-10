@@ -15,14 +15,6 @@ export type Fixture = {
   competition: "Premier League"
 }
 
-export type PublishedFixtures = {
-  schemaVersion: 1
-  lastUpdated: string // ISO 8601
-  season: string      // e.g. "2026/27"
-  source: "football-data.org"
-  fixtures: Fixture[]
-}
-
 export type FixtureErrorCode =
   | "missing_team"
   | "fetch_failed"

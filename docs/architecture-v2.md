@@ -18,18 +18,10 @@ The application is built as a single-page application (SPA) using **Next.js**. I
 ## 3. Fixture Data Pipeline
 - **Weekly Action:** `.github/workflows/fetch-fixtures.yml` runs every Tuesday at 06:17 UTC (and on manual dispatch). It runs `scripts/fetch-fixtures.mjs`, which makes one request to `football-data.org` (`/v4/competitions/PL/matches`, current season) using the `FOOTBALL_DATA_API_KEY` GitHub Actions secret. If the request or validation fails, the job fails and nothing is published.
 - **`data` branch:** An orphan branch containing only `fixtures.json` (`schemaVersion`, `lastUpdated`, `season`, `source`, `fixtures`). The app reads it from `raw.githubusercontent.com`.
-- **Route handler:** `app/api/fixtures/route.ts` fetches the published file (cached for 1 hour), validates it with `evaluatePublishedFixtures` (`lib/publishedFixtures.ts`), canonicalizes team names and filters to the requested team.
+- **Fixtures module:** `lib/fixtures.ts` owns the whole contract. `loadFixtures(team)` fetches the published file (cached for 1 hour), validates it against a zod schema (every fixture is checked; one bad fixture rejects the file), canonicalizes team names, filters to the requested team and returns `{ status, body }`. Its pure core, `evaluateFixtures(json, team, now)`, holds every data rule and can be checked without the network.
+- **Route handler:** `app/api/fixtures/route.ts` reads `?team`, calls `loadFixtures`, logs one line and responds with the body and status.
 - **Staleness rule:** Data whose `lastUpdated` is more than 8 days old is not shown. This is how a failed weekly fetch becomes visible to users.
-- **Errors:** Every response is a `FixturesResult`. Failures carry a code and a user-facing message:
-
-| Code | HTTP | Meaning |
-|---|---|---|
-| `missing_team` | 400 | No `team` query parameter |
-| `fetch_failed` | 502 | The published file couldn't be fetched |
-| `invalid_data` | 502 | The file wasn't valid JSON or the expected shape |
-| `stale_data` | 503 | `lastUpdated` is more than 8 days old |
-| `team_not_found` | 404 | No fixtures for the team this season |
-| `network_error` | — | Client-side only: the request to `/api/fixtures` failed |
+- **Errors:** Every response is a `FixturesResult`. Failures carry a code and a user-facing message. The codes, HTTP statuses and messages are defined once, in the `ERRORS` table in `lib/fixtures.ts` (`missing_team`, `fetch_failed`, `invalid_data`, `stale_data`, `team_not_found`). The client-only `network_error` (the request to `/api/fixtures` itself failed) is produced in `lib/fixtureApi.ts`.
 
 - **No API key in the app:** The app never reads an API key. The key exists only as a GitHub Actions secret used by the fetch script.
 

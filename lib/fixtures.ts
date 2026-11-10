@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { z } from "zod";
 import { Fixture, FixtureErrorCode, FixturesResult } from "@/types";
-import { canonicalizeTeamName } from "@/lib/teamNames";
+import { resolveTeamName } from "@/lib/teams";
 
 export const PUBLISHED_FIXTURES_URL =
   "https://raw.githubusercontent.com/JoshDavidson0/First-Kick/data/fixtures.json";
@@ -75,14 +75,15 @@ export function evaluateFixtures(json: unknown, team: string | null, now: Date):
     };
   }
 
-  const requestedTeam = canonicalizeTeamName(team);
+  // `team` must be canonical (it comes from the quiz). Published names are
+  // canonicalized here, once; unknown clubs keep their published spelling.
   const fixtures = data.fixtures
     .map((f) => ({
       ...f,
-      homeTeam: canonicalizeTeamName(f.homeTeam),
-      awayTeam: canonicalizeTeamName(f.awayTeam),
+      homeTeam: resolveTeamName(f.homeTeam) ?? f.homeTeam,
+      awayTeam: resolveTeamName(f.awayTeam) ?? f.awayTeam,
     }))
-    .filter((f) => f.homeTeam === requestedTeam || f.awayTeam === requestedTeam);
+    .filter((f) => f.homeTeam === team || f.awayTeam === team);
 
   if (fixtures.length === 0) return error("team_not_found");
 

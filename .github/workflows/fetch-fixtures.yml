@@ -64,3 +64,9 @@ jobs:
         run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/fetch-fixtures.yml/enable"
         env:
           GH_TOKEN: ${{ github.token }}
+
+      # Runs after publishing on purpose: a missing alias or a relegated quiz
+      # club affects one club's users, while withholding the data would take
+      # fixtures away from everyone once it went stale. The failed run is the alarm.
+      - name: Check clubs against team registry
+        run: node scripts/check-teams.mjs "$RUNNER_TEMP/fixtures.json"

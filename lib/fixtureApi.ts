@@ -1,6 +1,8 @@
 import { FixturesResult } from "@/types";
 import { canonicalizeTeamName } from "@/lib/teamNames";
-import { FIXTURE_ERROR_MESSAGES } from "@/lib/publishedFixtures";
+
+const NETWORK_ERROR_MESSAGE =
+  "Couldn't reach the fixtures service. Check that the app is running and try again.";
 
 function isFixturesResult(body: unknown): body is FixturesResult {
   const result = body as FixturesResult | null;
@@ -27,5 +29,5 @@ export async function fetchFixtures(teamName: string): Promise<FixturesResult> {
     // Fall through to network_error
   }
 
-  return { ok: false, code: "network_error", message: FIXTURE_ERROR_MESSAGES.network_error };
+  return { ok: false, code: "network_error", message: NETWORK_ERROR_MESSAGE };
 }

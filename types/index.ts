@@ -1,6 +1,7 @@
 // Shared TypeScript types for First Kick V2.
 
 import type { Game, Trait } from "@/lib/quiz";
+import type { ModuleId } from "@/lib/lessons";
 
 export type QuizData = {
   sessionId: string
@@ -36,8 +37,8 @@ export type SessionData = {
   favoriteLeague: string
   reason: string
   progress: {
-    completedModules: string[]
-    currentModule: string
+    completedModules: ModuleId[]
+    currentModule: ModuleId
     lastActive: string
   }
   createdAt: string

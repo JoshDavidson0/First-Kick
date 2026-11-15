@@ -9,6 +9,7 @@ import { ModuleLesson } from "@/components/module-lesson";
 import { FixtureList } from "@/components/FixtureList";
 import type { QuizData, SessionData } from "@/types";
 import { getMatch } from "@/lib/matcher";
+import { MODULE_IDS, nextModule, type ModuleId } from "@/lib/lessons";
 import { ChevronDown } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -20,7 +21,7 @@ type Screen =
   | { name: "quiz" }
   | { name: "recommendation"; session: SessionData }
   | { name: "journey"; session: SessionData }
-  | { name: "lesson"; moduleId: string; session: SessionData }
+  | { name: "lesson"; moduleId: ModuleId; session: SessionData }
 
 // ---------------------------------------------------------------------------
 // LocalStorage Keys
@@ -69,9 +70,9 @@ export default function Home() {
     const sessionId = quizData.sessionId || crypto.randomUUID();
     const now = new Date().toISOString();
     
-    const progress = {
+    const progress: SessionData["progress"] = {
       completedModules: [],
-      currentModule: "rules",
+      currentModule: MODULE_IDS[0],
       lastActive: now,
     };
 
@@ -99,18 +100,13 @@ export default function Home() {
     setScreen({ name: "recommendation", session });
   };
 
-  const handleModuleComplete = async (moduleId: string, session: SessionData) => {
+  const handleModuleComplete = (moduleId: ModuleId, session: SessionData) => {
     const updatedCompletedModules = Array.from(new Set([...session.progress.completedModules, moduleId]));
-    
-    // Simple linear progression: rules -> positions -> formations -> rivalries -> history
-    const modules = ["rules", "positions", "formations", "rivalries", "history"];
-    const currentIndex = modules.indexOf(moduleId);
-    const nextModule = modules[currentIndex + 1] || moduleId;
 
     const updatedProgress = {
       ...session.progress,
       completedModules: updatedCompletedModules,
-      currentModule: nextModule,
+      currentModule: nextModule(moduleId),
       lastActive: new Date().toISOString(),
     };
 

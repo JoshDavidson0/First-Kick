@@ -1,48 +1,14 @@
 "use client"
 
 import { Check, Lock } from "lucide-react"
+import { LESSONS as modules, type ModuleId } from "@/lib/lessons"
 
 interface ProgressJourneyProps {
-  completedModules: string[]
-  currentModule: string
-  onContinue: (module: string) => void
+  completedModules: readonly ModuleId[]
+  currentModule: ModuleId
+  onContinue: (module: ModuleId) => void
   onViewRecommendation: () => void
 }
-
-// Module IDs must match api-contracts.md and claude.md exactly:
-// "rules" | "positions" | "formations" | "rivalries" | "history"
-const modules = [
-  {
-    id: "rules",
-    name: "The Rules",
-    emoji: "📋",
-    description: "Learn the basic rules of soccer",
-  },
-  {
-    id: "positions",
-    name: "Positions",
-    emoji: "🧩",
-    description: "Understand what each player does",
-  },
-  {
-    id: "formations",
-    name: "Formations",
-    emoji: "🗺️",
-    description: "How teams line up on the pitch",
-  },
-  {
-    id: "rivalries",
-    name: "Rivalries",
-    emoji: "🔥",
-    description: "The biggest feuds in soccer history",
-  },
-  {
-    id: "history",
-    name: "History",
-    emoji: "🏆",
-    description: "How the sport became the world's game",
-  },
-]
 
 export function ProgressJourney({
   completedModules,
@@ -54,7 +20,7 @@ export function ProgressJourney({
   const totalModules = modules.length
   const progressPercentage = (completedCount / totalModules) * 100
 
-  const getModuleState = (moduleId: string): "completed" | "current" | "locked" => {
+  const getModuleState = (moduleId: ModuleId): "completed" | "current" | "locked" => {
     if (completedModules.includes(moduleId)) return "completed"
     if (moduleId === currentModule) return "current"
     return "locked"
@@ -204,7 +170,7 @@ export function ProgressJourney({
                         {module.description}
                       </p>
 
-                      {/* Continue button — passes module.id (not module.name) to match API contract */}
+                      {/* Continue button */}
                       {state === "current" && (
                         <button
                           onClick={() => onContinue(module.id)}

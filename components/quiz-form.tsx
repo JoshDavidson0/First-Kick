@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { GAMES as games, MAX_SELECTIONS, TRAITS as personalityTraits, type Game, type Trait } from "@/lib/quiz";
 import type { QuizData } from "@/types";
 
@@ -8,27 +8,12 @@ interface QuizFormProps {
   onSubmit: (data: QuizData) => void;
 }
 
-// Retrieve existing session ID or generate a new one
-function getOrCreateSessionId(): string {
-  if (typeof window === "undefined") return "";
-  const existing = localStorage.getItem("firstkick_session_id");
-  if (existing) return existing;
-  const newId = crypto.randomUUID();
-  localStorage.setItem("firstkick_session_id", newId);
-  return newId;
-}
-
 export function QuizForm({ onSubmit }: QuizFormProps) {
   const [step, setStep] = useState(1);
   const [selectedTraits, setSelectedTraits] = useState<Trait[]>([]);
   const [selectedGames, setSelectedGames] = useState<Game[]>([]);
-  const [sessionId, setSessionId] = useState<string>("");
 
   const totalSteps = 3;
-
-  useEffect(() => {
-    setSessionId(getOrCreateSessionId());
-  }, []);
 
   const toggleSelection = <T extends string>(
     id: T,
@@ -58,7 +43,6 @@ export function QuizForm({ onSubmit }: QuizFormProps) {
 
   const handleSubmit = () => {
     onSubmit({
-      sessionId,
       personalityTraits: selectedTraits,
       favoriteGames: selectedGames,
     });

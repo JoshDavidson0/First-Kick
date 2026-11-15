@@ -1,9 +1,9 @@
 // Shared TypeScript types for First Kick V2.
 
 import type { Game, Trait } from "@/lib/quiz";
+import type { ModuleId } from "@/lib/lessons";
 
 export type QuizData = {
-  sessionId: string
   personalityTraits: Trait[]
   favoriteGames: Game[]
 }
@@ -29,19 +29,16 @@ export type FixturesResult =
   | { ok: true; fixtures: Fixture[]; lastUpdated: string; season: string }
   | { ok: false; code: FixtureErrorCode; message: string; lastUpdated?: string }
 
+// What the browser saves (lib/session.ts): the quiz result and lesson progress.
 export type SessionData = {
-  sessionId: string
   favoriteTeam: string
   favoritePlayer: string
   favoriteLeague: string
   reason: string
   progress: {
-    completedModules: string[]
-    currentModule: string
-    lastActive: string
+    completedModules: ModuleId[]
+    currentModule: ModuleId
   }
-  createdAt: string
-  lastActive: string
 }
 
 export type RecommendationResponse = {
@@ -49,13 +46,4 @@ export type RecommendationResponse = {
   player: string
   league: string
   reason: string
-}
-
-export type ProgressResponse = {
-  status: string
-  progress: {
-    completedModules: string[]
-    currentModule: string
-    lastActive: string
-  }
 }

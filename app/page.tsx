@@ -7,8 +7,10 @@ import { RecommendationCard } from "@/components/recommendation-card";
 import { ProgressJourney } from "@/components/progress-journey";
 import { ModuleLesson } from "@/components/module-lesson";
 import { FixtureList } from "@/components/FixtureList";
-import type { QuizData, SessionData } from "@/types";
+import type { SessionData } from "@/types";
 import { getMatch } from "@/lib/matcher";
+import type { ModuleId } from "@/lib/lessons";
+import { clearSession, completeModule, createSession, loadSession } from "@/lib/session";
 import { ChevronDown } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -17,116 +19,31 @@ import { ChevronDown } from "lucide-react";
 
 type Screen =
   | { name: "hero" }
-  | { name: "quiz" }
+  | { name: "quiz"; progress?: SessionData["progress"] } // progress is kept on a retake
   | { name: "recommendation"; session: SessionData }
   | { name: "journey"; session: SessionData }
-  | { name: "lesson"; moduleId: string; session: SessionData }
+  | { name: "lesson"; moduleId: ModuleId; session: SessionData }
 
 // ---------------------------------------------------------------------------
-// LocalStorage Keys
-// ---------------------------------------------------------------------------
-
-const STORAGE_KEYS = {
-  SESSION_ID: "firstkick_session_id",
-  RECOMMENDATION: "firstkick_recommendation",
-  PROGRESS: "firstkick_progress",
-};
-
-// ---------------------------------------------------------------------------
-// Page — navigation state machine
+// Page — navigation state machine (saving and loading live in lib/session)
 // ---------------------------------------------------------------------------
 
 export default function Home() {
   const [screen, setScreen] = useState<Screen | null>(null);
 
-  // Initial load from localStorage
+  // Restore a saved session, if there is a valid one
   useEffect(() => {
     try {
-      const sessionId = localStorage.getItem(STORAGE_KEYS.SESSION_ID);
-      const recommendation = localStorage.getItem(STORAGE_KEYS.RECOMMENDATION);
-      const progress = localStorage.getItem(STORAGE_KEYS.PROGRESS);
-
-      if (sessionId && recommendation && progress) {
-        const session: SessionData = {
-          sessionId,
-          ...JSON.parse(recommendation),
-          progress: JSON.parse(progress),
-          createdAt: new Date().toISOString(), // Fallback
-          lastActive: new Date().toISOString(),
-        };
-        setScreen({ name: "recommendation", session });
-      } else {
-        setScreen({ name: "hero" });
-      }
+      const session = loadSession();
+      setScreen(session ? { name: "recommendation", session } : { name: "hero" });
     } catch (e) {
       console.error("Error loading session:", e);
       setScreen({ name: "hero" });
     }
   }, []);
 
-  const handleQuizSubmit = (quizData: QuizData) => {
-    const match = getMatch(quizData);
-    const sessionId = quizData.sessionId || crypto.randomUUID();
-    const now = new Date().toISOString();
-    
-    const progress = {
-      completedModules: [],
-      currentModule: "rules",
-      lastActive: now,
-    };
-
-    const session: SessionData = {
-      sessionId,
-      favoriteTeam: match.team,
-      favoritePlayer: match.player,
-      favoriteLeague: match.league,
-      reason: match.reason,
-      progress,
-      createdAt: now,
-      lastActive: now,
-    };
-
-    // Persist to localStorage
-    localStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
-    localStorage.setItem(STORAGE_KEYS.RECOMMENDATION, JSON.stringify({
-      favoriteTeam: session.favoriteTeam,
-      favoritePlayer: session.favoritePlayer,
-      favoriteLeague: session.favoriteLeague,
-      reason: session.reason,
-    }));
-    localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(progress));
-
-    setScreen({ name: "recommendation", session });
-  };
-
-  const handleModuleComplete = async (moduleId: string, session: SessionData) => {
-    const updatedCompletedModules = Array.from(new Set([...session.progress.completedModules, moduleId]));
-    
-    // Simple linear progression: rules -> positions -> formations -> rivalries -> history
-    const modules = ["rules", "positions", "formations", "rivalries", "history"];
-    const currentIndex = modules.indexOf(moduleId);
-    const nextModule = modules[currentIndex + 1] || moduleId;
-
-    const updatedProgress = {
-      ...session.progress,
-      completedModules: updatedCompletedModules,
-      currentModule: nextModule,
-      lastActive: new Date().toISOString(),
-    };
-
-    const updatedSession = {
-      ...session,
-      progress: updatedProgress,
-    };
-
-    localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(updatedProgress));
-    setScreen({ name: "journey", session: updatedSession });
-  };
-
   const handleStartOver = () => {
-    localStorage.removeItem(STORAGE_KEYS.SESSION_ID);
-    localStorage.removeItem(STORAGE_KEYS.RECOMMENDATION);
-    localStorage.removeItem(STORAGE_KEYS.PROGRESS);
+    clearSession();
     setScreen({ name: "quiz" });
   };
 
@@ -143,7 +60,11 @@ export default function Home() {
     case "quiz":
       return (
         <main className="min-h-screen py-12 px-4">
-          <QuizForm onSubmit={handleQuizSubmit} />
+          <QuizForm
+            onSubmit={(quizData) =>
+              setScreen({ name: "recommendation", session: createSession(getMatch(quizData), screen.progress) })
+            }
+          />
         </main>
       );
 
@@ -159,7 +80,7 @@ export default function Home() {
               isLoading={false}
               error={null}
               onViewJourney={() => setScreen({ name: "journey", session: screen.session })}
-              onRetake={() => setScreen({ name: "quiz" })}
+              onRetake={() => setScreen({ name: "quiz", progress: screen.session.progress })}
             />
 
             <div className="flex flex-col items-center animate-bounce text-muted-foreground py-4">
@@ -204,7 +125,9 @@ export default function Home() {
         <main className="min-h-screen py-12 px-4">
           <ModuleLesson
             moduleId={screen.moduleId}
-            onComplete={() => handleModuleComplete(screen.moduleId, screen.session)}
+            onComplete={() =>
+              setScreen({ name: "journey", session: completeModule(screen.session, screen.moduleId) })
+            }
             onBack={() =>
               setScreen({ name: "journey", session: screen.session })
             }

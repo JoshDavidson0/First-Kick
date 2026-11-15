@@ -20,29 +20,19 @@ Prerequisites:
 - Git
 
 ```bash
-git clone https://github.com/JoshDavidson0/First-Kick-Retired.git
-cd First-Kick-Retired
+git clone https://github.com/JoshDavidson0/First-Kick.git
+cd First-Kick
 npm install
 npm run dev
 ```
 
 Visit: `http://localhost:3000`
 
-### Checks
-
-```bash
-npx tsc --noEmit            # types
-node scripts/check-quiz.mjs # every quiz answer can reach a club and player
-npm test                    # vitest: lessons and session
-```
-
-### Fixture data
 
 - Fixtures refresh automatically every Tuesday from [football-data.org](https://www.football-data.org) via a GitHub Action.
 - No API key or setup is needed to run locally.
 - If the data can't be loaded or is more than 8 days old, the app shows an error instead of fixtures. There is no offline or saved dataset.
-- After each weekly fetch, `scripts/check-teams.mjs` checks the fixtures against the club registry (`lib/teams.ts`). Promotion and relegation make it fail each summer until the registry is updated.
-- A session saved before a club left the registry still loads with that club and shows no fixtures. This is intended: Start Over or retaking the quiz fixes it.
+- After each weekly fetch, `scripts/check-teams.mjs` checks the fixtures against the club registry (`lib/teams.ts`).
 
 ## 2. How it Works
 
@@ -76,17 +66,7 @@ The project's foundation was built using a deliberate **AI-assisted software dev
 | ChatGPT (GPT-4o) | Planning, documentation, feasibility analysis, SRS, risk register | Planning |
 | v0 by Vercel | UI scaffolding, component generation, responsive layout prototyping | Design |
 | Claude Code | Full-stack implementation, refactoring, core logic generation | Development |
-| GitHub Copilot | Debugging assistance, test generation, inline code completion | Testing |
 
-### AI Engineering Analysis
-
-Building First Kick demonstrated several key insights into modern AI-assisted engineering:
-
-- **Context is King:** Tools like Claude Code perform exponentially better when provided with structured context (like our `claude.md`) that defines architectural boundaries and naming conventions.
-- **Verification is Non-Negotiable:** AI tools can hallucinate API signatures or quantitatively overconfident claims. The role of the developer has shifted from "writer" to "editor and orchestrator," where verification of every AI output is the most critical step.
-- **Design Compression:** v0 and similar tools dramatically compress the time from concept to high-fidelity UI, allowing developers to focus more on integration and business logic.
-
----
 
 ## License
 

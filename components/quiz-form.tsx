@@ -1,36 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { GAMES as games, MAX_SELECTIONS, TRAITS as personalityTraits, type Game, type Trait } from "@/lib/quiz";
+import type { QuizData } from "@/types";
 
 interface QuizFormProps {
-  onSubmit: (data: {
-    sessionId: string;
-    personalityTraits: string[];
-    favoriteGames: string[];
-  }) => void;
+  onSubmit: (data: QuizData) => void;
 }
-
-const personalityTraits = [
-  { id: "competitive", label: "Competitive", emoji: "🏆" },
-  { id: "creative", label: "Creative", emoji: "🎨" },
-  { id: "laid-back", label: "Laid-back", emoji: "😎" },
-  { id: "analytical", label: "Analytical", emoji: "🧠" },
-  { id: "passionate", label: "Passionate", emoji: "🔥" },
-  { id: "determined", label: "Determined", emoji: "💪" },
-  { id: "energetic", label: "Energetic", emoji: "⚡" },
-  { id: "focused", label: "Focused", emoji: "🎯" },
-  { id: "confident", label: "Confident", emoji: "✨" },
-];
-
-const games = [
-  { id: "EA FC", label: "EA FC / FIFA", emoji: "⚽" },
-  { id: "Football Manager", label: "Football Manager", emoji: "📊" },
-  { id: "Action Games", label: "Action Games", emoji: "🕹️" },
-  { id: "Strategy Games", label: "Strategy Games", emoji: "🧩" },
-  { id: "RPG Games", label: "RPG Games", emoji: "⚔️" },
-  { id: "Shooter Games", label: "Shooter Games", emoji: "🔫" },
-  { id: "Simulation Games", label: "Simulation Games", emoji: "✈️" },
-];
 
 // Retrieve existing session ID or generate a new one
 function getOrCreateSessionId(): string {
@@ -44,8 +20,8 @@ function getOrCreateSessionId(): string {
 
 export function QuizForm({ onSubmit }: QuizFormProps) {
   const [step, setStep] = useState(1);
-  const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
-  const [selectedGames, setSelectedGames] = useState<string[]>([]);
+  const [selectedTraits, setSelectedTraits] = useState<Trait[]>([]);
+  const [selectedGames, setSelectedGames] = useState<Game[]>([]);
   const [sessionId, setSessionId] = useState<string>("");
 
   const totalSteps = 3;
@@ -54,14 +30,14 @@ export function QuizForm({ onSubmit }: QuizFormProps) {
     setSessionId(getOrCreateSessionId());
   }, []);
 
-  const toggleSelection = (
-    id: string,
-    selected: string[],
-    setSelected: React.Dispatch<React.SetStateAction<string[]>>
+  const toggleSelection = <T extends string>(
+    id: T,
+    selected: T[],
+    setSelected: React.Dispatch<React.SetStateAction<T[]>>
   ) => {
     if (selected.includes(id)) {
       setSelected(selected.filter((item) => item !== id));
-    } else if (selected.length < 3) {
+    } else if (selected.length < MAX_SELECTIONS) {
       setSelected([...selected, id]);
     }
   };
@@ -88,10 +64,10 @@ export function QuizForm({ onSubmit }: QuizFormProps) {
     });
   };
 
-  const getTraitLabel = (id: string) =>
+  const getTraitLabel = (id: Trait) =>
     personalityTraits.find((t) => t.id === id)?.label || id;
 
-  const getGameLabel = (id: string) =>
+  const getGameLabel = (id: Game) =>
     games.find((g) => g.id === id)?.label || id;
 
   return (
@@ -118,7 +94,7 @@ export function QuizForm({ onSubmit }: QuizFormProps) {
               How would you describe yourself?
             </h2>
             <p className="mb-6 text-center text-muted-foreground">
-              Select 1 to 3 traits that best describe you
+              Select 1 to {MAX_SELECTIONS} traits that best describe you
             </p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
               {personalityTraits.map((trait) => {
@@ -153,7 +129,7 @@ export function QuizForm({ onSubmit }: QuizFormProps) {
               What kind of games do you enjoy?
             </h2>
             <p className="mb-6 text-center text-muted-foreground">
-              Select 1 to 3 genres you like
+              Select 1 to {MAX_SELECTIONS} genres you like
             </p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
               {games.map((game) => {

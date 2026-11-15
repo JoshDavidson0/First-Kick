@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # The quiz vocabulary is typed (lib/quiz.ts), so a typo or a club tag
+      # that no answer produces fails here.
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Check every club can be recommended
+        run: node scripts/check-quiz.mjs

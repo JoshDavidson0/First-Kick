@@ -1,17 +1,20 @@
 // The team registry: every club the app knows, with its canonical name, the
 // other spellings it appears under, and its quiz identity. Club names are
 // canonicalized here and nowhere else.
-// No imports, so scripts/check-teams.mjs can load this file directly with Node.
+// Only type imports (erased at runtime), so scripts/check-teams.mjs and
+// scripts/check-quiz.mjs can load this file directly with Node.
+
+import type { Tag, Trait } from "./quiz.ts";
 
 export type TeamIdentity = {
   name: string; // Canonical: the only spelling the app and fixtures use
   aliases: string[]; // Other spellings, e.g. football-data.org short names
   league: string;
-  tags: string[];
+  tags: Tag[]; // Exactly 4 per club, so no club wins ties by having more
   players: {
     name: string;
     description: string;
-    traitMatch: string; // The personality trait this player best matches
+    traitMatch: Trait; // The personality trait this player best matches
   }[];
   reasonTemplate: string;
 };
@@ -21,7 +24,7 @@ export const TEAMS: TeamIdentity[] = [
     name: "Arsenal",
     aliases: [],
     league: "Premier League",
-    tags: ["technical", "attacking", "young", "historic", "global"],
+    tags: ["technical", "attacking", "young", "historic"],
     players: [
       {
         name: "Martin Ødegaard",
@@ -121,7 +124,7 @@ export const TEAMS: TeamIdentity[] = [
       {
         name: "Sandro Tonali",
         description: "A technically gifted midfielder who orchestrates play with elegance and precision.",
-        traitMatch: "positive"
+        traitMatch: "focused"
       },
       {
         name: "James Maddison",
@@ -216,12 +219,12 @@ export const TEAMS: TeamIdentity[] = [
       {
         name: "Jordan Pickford",
         description: "England's number one goalkeeper, known for his vocal leadership and heroic saves.",
-        traitMatch: "vocal"
+        traitMatch: "confident"
       },
       {
         name: "James Garner",
         description: "A determined midfielder who never shies away from a challenge and always gives 100%.",
-        traitMatch: "physical"
+        traitMatch: "determined"
       }
     ],
     reasonTemplate: "Everton's rich history and legendary grit match your {trait} personality and interest in {game}."
@@ -249,7 +252,7 @@ export const TEAMS: TeamIdentity[] = [
     name: "Crystal Palace",
     aliases: [],
     league: "Premier League",
-    tags: ["flair", "passionate", "dynamic", "south-london"],
+    tags: ["flair", "passionate", "dynamic", "loud"],
     players: [
       {
         name: "Adam Wharton",
@@ -268,7 +271,7 @@ export const TEAMS: TeamIdentity[] = [
     name: "Fulham",
     aliases: [],
     league: "Premier League",
-    tags: ["historic", "technical", "balanced", "london"],
+    tags: ["historic", "technical", "balanced", "loyal"],
     players: [
       {
         name: "Alex Iwobi",

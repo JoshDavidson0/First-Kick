@@ -1,9 +1,11 @@
 // Shared TypeScript types for First Kick V2.
 
+import type { Game, Trait } from "@/lib/quiz";
+
 export type QuizData = {
   sessionId: string
-  personalityTraits: string[]
-  favoriteGames: string[]
+  personalityTraits: Trait[]
+  favoriteGames: Game[]
 }
 
 export type Fixture = {

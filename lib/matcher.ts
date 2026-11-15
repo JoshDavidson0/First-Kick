@@ -1,60 +1,24 @@
-import { QuizData, RecommendationResponse } from "@/types";
-import { TEAMS } from "@/lib/teams";
+// Relative .ts imports so scripts/check-quiz.mjs can load this file with Node.
+import type { QuizData, RecommendationResponse } from "@/types";
+import { TEAMS, type TeamIdentity } from "./teams.ts";
+import { GAME_TO_TAGS, TRAIT_TO_TAGS, type Game, type Tag, type Trait } from "./quiz.ts";
 
-// Map quiz answers to identity tags
-const TRAIT_TO_TAGS: Record<string, string[]> = {
-  "competitive": ["ambitious", "determined", "glamour"],
-  "laid-back": ["balanced", "coastal", "smart"],
-  "creative": ["attacking", "flair", "technical", "modern"],
-  "analytical": ["smart", "technical", "balanced"],
-  "passionate": ["passionate", "historic", "loud", "working-class"],
-  "determined": ["tough", "determined", "physical", "working-class"],
-  "energetic": ["attacking", "dynamic", "young"],
-  "focused": ["smart", "balanced", "technical"],
-  "confident": ["glamour", "global", "ambitious"]
-};
+/** The clubs tied for the highest tag overlap with the answers (never empty). */
+export function topTeams(traits: readonly Trait[], games: readonly Game[]): TeamIdentity[] {
+  const preferredTags = new Set<Tag>([
+    ...traits.flatMap((trait) => TRAIT_TO_TAGS[trait]),
+    ...games.flatMap((game) => GAME_TO_TAGS[game]),
+  ]);
 
-const GAME_TO_TAGS: Record<string, string[]> = {
-  "EA FC": ["glamour", "global", "attacking", "modern"],
-  "Football Manager": ["smart", "technical", "analytical", "rising"],
-  "Action Games": ["attacking", "dynamic", "energetic"],
-  "Strategy Games": ["smart", "technical", "balanced"],
-  "RPG Games": ["historic", "passionate", "global"],
-  "Shooter Games": ["dynamic", "energetic", "physical"],
-  "Simulation Games": ["smart", "technical", "balanced"]
-};
+  const scores = TEAMS.map((team) => team.tags.filter((tag) => preferredTags.has(tag)).length);
+  const best = Math.max(...scores);
+  return TEAMS.filter((_, i) => scores[i] === best);
+}
 
-export function getMatch(quizData: QuizData): RecommendationResponse {
-  const preferredTags = new Set<string>();
-  
-  quizData.personalityTraits.forEach(trait => {
-    (TRAIT_TO_TAGS[trait] || []).forEach(tag => preferredTags.add(tag));
-  });
-  
-  quizData.favoriteGames.forEach(game => {
-    (GAME_TO_TAGS[game] || []).forEach(tag => preferredTags.add(tag));
-  });
-
-  // Score each team
-  const scoredTeams = TEAMS.map(team => {
-    let score = 0;
-    team.tags.forEach(tag => {
-      if (preferredTags.has(tag)) {
-        score++;
-      }
-    });
-    return { team, score };
-  });
-
-  // Sort by score (desc), then by total tag count (desc) to break ties
-  scoredTeams.sort((a, b) => {
-    if (b.score !== a.score) {
-      return b.score - a.score;
-    }
-    return b.team.tags.length - a.team.tags.length;
-  });
-
-  const matchedTeam = scoredTeams[0].team;
+/** Recommends a club for the answers. Ties are broken at random by `random`. */
+export function getMatch(quizData: QuizData, random: () => number = Math.random): RecommendationResponse {
+  const tied = topTeams(quizData.personalityTraits, quizData.favoriteGames);
+  const matchedTeam = tied[Math.floor(random() * tied.length)];
 
   // Select player
   const primaryTrait = quizData.personalityTraits[0] || "passionate";
